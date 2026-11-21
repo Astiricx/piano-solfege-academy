@@ -4,6 +4,7 @@ import { useInput, type InputSource } from '../input/InputContext';
 import { liveStreak, useProgress } from '../state/progress';
 import { midiLabel } from '../lib/music';
 import { navigate } from '../lib/router';
+import { audio } from '../audio/AudioEngine';
 
 function MidiStatusBadge() {
   const { midiStatus, midiDevices, source } = useInput();
@@ -153,7 +154,10 @@ export function TopBar() {
           <button
             type="button"
             className="btn-ghost !px-2"
-            onClick={() => setSettings({ soundOn: !settings.soundOn })}
+            onClick={() => {
+              if (settings.soundOn) audio.releaseAll();
+              setSettings({ soundOn: !settings.soundOn });
+            }}
             title={settings.soundOn ? 'Couper le son du piano virtuel' : 'Activer le son du piano virtuel'}
             aria-label="Son du piano virtuel"
           >

@@ -62,6 +62,7 @@ export function InputProvider({ children }: { children: ReactNode }) {
   const listeners = useRef(new Set<(e: NoteEvent) => void>());
   const [activeNotes, setActiveNotes] = useState<number[]>([]);
   const activeRef = useRef(new Map<number, number>()); // midi -> compteur
+  const soundingRef = useRef(new Set<number>());
   const [hints, setHintsState] = useState<KeyHints>({});
   const [octaveShift, setOctaveShift] = useState(0);
   const octaveRef = useRef(0);
@@ -83,9 +84,13 @@ export function InputProvider({ children }: { children: ReactNode }) {
     const s = settingsRef.current;
     const audible =
       e.origin === 'pc' || e.origin === 'virtual' ? s.soundOn : e.origin === 'midi' ? s.midiEcho : false;
-    if (audible) {
-      if (e.type === 'on') audio.noteOn(e.midi, e.velocity);
-      else audio.noteOff(e.midi);
+    // On relâche toujours une note qu'on a fait sonner, même si le réglage du son a changé entre-temps.
+    if (e.type === 'on' && audible) {
+      audio.noteOn(e.midi, e.velocity);
+      soundingRef.current.add(e.midi);
+    } else if (e.type === 'off' && soundingRef.current.has(e.midi) && !map.has(e.midi)) {
+      audio.noteOff(e.midi);
+      soundingRef.current.delete(e.midi);
     }
     listeners.current.forEach((l) => l(e));
   }, []);

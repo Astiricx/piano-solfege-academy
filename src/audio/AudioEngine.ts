@@ -26,6 +26,8 @@ class AudioEngineImpl {
   private clickSynth: Tone.Synth | null = null;
   private tapSynth: Tone.MembraneSynth | null = null;
   private samplerLoaded = false;
+  /** Instrument utilisé par chaque note tenue (pour la relâcher sur le bon). */
+  private held = new Map<number, 'sampler' | 'synth'>();
   private busyUntil = 0;
   private listeners = new Set<Listener>();
 
@@ -69,7 +71,8 @@ class AudioEngineImpl {
     const limiter = new Tone.Limiter(-1).toDestination();
     this.synth = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'triangle' },
-      envelope: { attack: 0.005, decay: 0.4, sustain: 0.25, release: 0.9 },
+      // sustain 0 : comme un vrai piano, le son s'éteint seul même si la touche reste enfoncée
+      envelope: { attack: 0.005, decay: 1.6, sustain: 0, release: 0.5 },
     }).connect(limiter);
     this.synth.volume.value = -8;
 
@@ -111,16 +114,28 @@ class AudioEngineImpl {
       void this.ensureStarted();
       return;
     }
+    if (this.held.has(midi)) this.noteOff(midi);
     const n = this.note(midi);
-    if (this.samplerLoaded && this.sampler) this.sampler.triggerAttack(n, undefined, velocity);
-    else this.synth?.triggerAttack(n, undefined, velocity);
+    if (this.samplerLoaded && this.sampler) {
+      this.sampler.triggerAttack(n, undefined, velocity);
+      this.held.set(midi, 'sampler');
+    } else if (this.synth) {
+      this.synth.triggerAttack(n, undefined, velocity);
+      this.held.set(midi, 'synth');
+    }
   }
 
   noteOff(midi: number) {
     if (!this.started) return;
     const n = this.note(midi);
-    if (this.samplerLoaded && this.sampler) this.sampler.triggerRelease(n);
-    else this.synth?.triggerRelease(n);
+    const inst = this.held.get(midi);
+    this.held.delete(midi);
+    if (inst === 'sampler') this.sampler?.triggerRelease(n);
+    else if (inst === 'synth') this.synth?.triggerRelease(n);
+    else {
+      this.sampler?.triggerRelease(n);
+      this.synth?.triggerRelease(n);
+    }
   }
 
   /** Joue une ou plusieurs notes pendant `dur` secondes, éventuellement à un instant précis. */
@@ -157,6 +172,7 @@ class AudioEngineImpl {
   }
 
   releaseAll() {
+    this.held.clear();
     if (!this.started) return;
     this.sampler?.releaseAll();
     this.synth?.releaseAll();
@@ -164,6 +180,13 @@ class AudioEngineImpl {
 }
 
 export const audio = new AudioEngineImpl();
+
+// Sécurité : on coupe toutes les notes tenues quand l'onglet passe en arrière-plan.
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) audio.releaseAll();
+  });
+}
 
 /** Planificateur à anticipation : n'envoie à Tone que les événements des ~150 prochaines ms,
  * ce qui permet d'arrêter instantanément un exercice. */
