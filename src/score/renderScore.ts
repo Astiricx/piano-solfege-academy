@@ -11,9 +11,11 @@ import {
   Stave,
   StaveConnector,
   StaveNote,
-  Tables,
   Voice,
 } from 'vexflow';
+
+/** Résolution interne des durées VexFlow (Tables.RESOLUTION, non exporté en v4). */
+const RESOLUTION = 16384;
 import type { Clef, Hand, Naming, Piece, ScoreNote } from '../types';
 import { KEY_SIGNATURES, pitchNameLabel } from '../lib/music';
 
@@ -51,7 +53,7 @@ export interface ScoreLayout {
 }
 
 function makeVoice(piece: Piece): Voice {
-  const v = new Voice({ num_beats: piece.timeSig[0], beat_value: piece.timeSig[1], resolution: Tables.RESOLUTION });
+  const v = new Voice({ num_beats: piece.timeSig[0], beat_value: piece.timeSig[1], resolution: RESOLUTION });
   v.setMode(Voice.Mode.SOFT);
   return v;
 }
@@ -306,7 +308,7 @@ export function renderSingleNote(
       const sn = new StaveNote({ keys: [pitch.key], duration: 'w', clef: pitch.clef, auto_stem: true });
       if (pitch.acc) sn.addModifier(new Accidental(pitch.acc), 0);
       sn.setStyle({ fillStyle: color, strokeStyle: color });
-      const voice = new Voice({ num_beats: 4, beat_value: 4, resolution: Tables.RESOLUTION });
+      const voice = new Voice({ num_beats: 4, beat_value: 4, resolution: RESOLUTION });
       voice.setMode(Voice.Mode.SOFT);
       voice.addTickables([sn]);
       new Formatter().joinVoices([voice]).format([voice], W - 120);
