@@ -34,6 +34,15 @@ export function KeyboardDock() {
               <button type="button" className="btn-secondary !px-2 !py-0.5 !text-xs" onClick={() => input.setOctaveShift(Math.min(2, input.octaveShift + 1))}>
                 +
               </button>
+              <button
+                type="button"
+                aria-pressed={settings.keyboardNames}
+                className={`btn !px-2 !py-0.5 !text-xs ${settings.keyboardNames ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'btn-secondary'}`}
+                onClick={() => setSettings({ keyboardNames: !settings.keyboardNames })}
+                title="Afficher ou masquer Do, Ré, Mi… sur les touches"
+              >
+                Noms des notes : {settings.keyboardNames ? 'ON' : 'OFF'}
+              </button>
               {!narrow && (
                 <button
                   type="button"
@@ -43,7 +52,7 @@ export function KeyboardDock() {
                   {settings.keyboardOctaves} octaves
                 </button>
               )}
-              <span className="ml-auto hidden md:inline">
+              <span className="ml-auto hidden xl:inline">
                 Clavier PC : rangée du bas = Do3, rangée du haut = Do central (touches noires sur la rangée au-dessus)
               </span>
             </>
@@ -57,6 +66,7 @@ export function KeyboardDock() {
             hints={input.hints}
             labels={input.keyLabels}
             naming={settings.naming}
+            showNames={settings.keyboardNames}
             onPress={input.pressVirtual}
             onRelease={input.releaseVirtual}
             height={narrow ? 110 : 140}

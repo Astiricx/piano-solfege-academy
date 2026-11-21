@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 export type Route =
   | { name: 'dashboard' }
-  | { name: 'solfege' }
+  | { name: 'solfege'; lesson?: string }
   | { name: 'rhythm' }
   | { name: 'lessons' }
   | { name: 'lesson'; id: string }
@@ -15,7 +15,7 @@ export function parseHash(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   switch (parts[0]) {
     case 'solfege':
-      return { name: 'solfege' };
+      return parts[1] === 'cours' && parts[2] ? { name: 'solfege', lesson: parts[2] } : { name: 'solfege' };
     case 'rythme':
       return { name: 'rhythm' };
     case 'lecons':
@@ -38,7 +38,7 @@ export function routeToHash(r: Route): string {
     case 'dashboard':
       return '#/';
     case 'solfege':
-      return '#/solfege';
+      return r.lesson ? `#/solfege/cours/${r.lesson}` : '#/solfege';
     case 'rhythm':
       return '#/rythme';
     case 'lessons':

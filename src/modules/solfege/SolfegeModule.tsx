@@ -6,8 +6,17 @@ import { PageHeader, Segmented, Stars, Tip } from '../../components/ui';
 import { pitchNameLabel } from '../../lib/music';
 import { ReadingGame, type GameMode } from './ReadingGame';
 import { EarTraining } from './EarTraining';
+import { SolfegeLesson } from './SolfegeLesson';
+import { KeyFindGame } from './KeyFindGame';
+import { Explorer } from './Explorer';
+import { navigate } from '../../lib/router';
 
-type Tab = 'reading' | 'ear' | 'stats';
+type Tab = 'reading' | 'explorer' | 'ear' | 'stats';
+type View =
+  | { kind: 'game'; level: SolfegeLevel; mode: GameMode }
+  | { kind: 'lesson'; level: SolfegeLevel }
+  | { kind: 'keys' }
+  | null;
 
 export function weakNotes(data: ProgressData, limit = 8) {
   return Object.entries(data.noteStats)
@@ -26,12 +35,40 @@ function levelUnlocked(levels: SolfegeLevel[], i: number, data: ProgressData, un
   return unlockAll || i === 0 || (data.solfege[levels[i - 1].id]?.stars ?? 0) >= 1;
 }
 
-export function SolfegeModule() {
+export function SolfegeModule({ lessonId }: { lessonId?: string }) {
   const { data, settings } = useProgress();
   const [tab, setTab] = useState<Tab>('reading');
-  const [game, setGame] = useState<{ level: SolfegeLevel; mode: GameMode } | null>(null);
+  const [view, setView] = useState<View>(() => {
+    const lv = lessonId ? SOLFEGE_LEVELS.find((l) => l.id === lessonId) : undefined;
+    return lv ? { kind: 'lesson', level: lv } : null;
+  });
+  const setGame = (g: { level: SolfegeLevel; mode: GameMode }) => setView({ kind: 'game', ...g });
+  const exit = () => {
+    setView(null);
+    if (lessonId) navigate({ name: 'solfege' });
+    window.scrollTo({ top: 0 });
+  };
+  const openLesson = (level: SolfegeLevel) => {
+    setView({ kind: 'lesson', level });
+    window.scrollTo({ top: 0 });
+  };
 
-  if (game) return <ReadingGame key={`${game.level.id}-${game.mode}`} level={game.level} mode={game.mode} onExit={() => setGame(null)} />;
+  if (view?.kind === 'game') return <ReadingGame key={`${view.level.id}-${view.mode}`} level={view.level} mode={view.mode} onExit={exit} />;
+  if (view?.kind === 'keys') return <KeyFindGame onExit={exit} onNext={() => openLesson(SOLFEGE_LEVELS[1])} />;
+  if (view?.kind === 'lesson') {
+    const lv = view.level;
+    const idx = SOLFEGE_LEVELS.indexOf(lv);
+    return (
+      <SolfegeLesson
+        key={lv.id}
+        level={lv}
+        onExit={exit}
+        onPractice={() => setGame({ level: lv, mode: 'zen' })}
+        onKeyGame={() => setView({ kind: 'keys' })}
+        onNextLevel={() => openLesson(SOLFEGE_LEVELS[idx + 1] ?? lv)}
+      />
+    );
+  }
 
   const weak = weakNotes(data, 24);
   const weakLevel: SolfegeLevel | null =
@@ -58,6 +95,7 @@ export function SolfegeModule() {
             onChange={setTab}
             options={[
               { value: 'reading', label: '👁 Lecture' },
+              { value: 'explorer', label: '🔍 Explorateur' },
               { value: 'ear', label: '👂 Oreille' },
               { value: 'stats', label: '📊 Statistiques' },
             ]}
@@ -69,7 +107,7 @@ export function SolfegeModule() {
         <>
           <Tip>
             Méthode des <strong>notes repères</strong> : on apprend d’abord quelques notes faciles à reconnaître (Do central, Sol de la clé de Sol, Fa de la clé de Fa), puis on lit
-            les autres par rapport à elles. Débloquez chaque niveau avec au moins une étoile.
+            les autres par rapport à elles. Commencez chaque niveau par <strong>📖 Apprendre la leçon</strong>, puis entraînez-vous. Débloquez le niveau suivant avec au moins une étoile.
           </Tip>
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {SOLFEGE_LEVELS.map((lv, i) => {
@@ -79,7 +117,7 @@ export function SolfegeModule() {
                 <div key={lv.id} className={`card flex flex-col ${unlocked ? '' : 'opacity-60'}`}>
                   <div className="flex items-start justify-between gap-2">
                     <span className="chip bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-200">
-                      Niveau {lv.number} · {lv.display === 'treble' ? 'Clé de Sol' : lv.display === 'bass' ? 'Clé de Fa' : 'Grande portée'}
+                      Niveau {lv.number} · {lv.intro ? 'Introduction' : lv.display === 'treble' ? 'Clé de Sol' : lv.display === 'bass' ? 'Clé de Fa' : 'Grande portée'}
                     </span>
                     <Stars n={st?.stars ?? 0} />
                   </div>
@@ -92,18 +130,34 @@ export function SolfegeModule() {
                   )}
                   {unlocked ? (
                     <div className="mt-4 flex flex-wrap gap-2">
-                      <button type="button" className="btn-secondary !py-1.5" onClick={() => setGame({ level: lv, mode: 'zen' })}>
-                        🧘 Zen
+                      <button type="button" className="btn-primary !py-1.5" onClick={() => openLesson(lv)}>
+                        📖 Apprendre la leçon
                       </button>
-                      <button type="button" className="btn-secondary !py-1.5" onClick={() => setGame({ level: lv, mode: 'chrono' })}>
-                        ⏱ Chrono
-                      </button>
-                      <button type="button" className="btn-primary !py-1.5" onClick={() => setGame({ level: lv, mode: 'challenge' })}>
-                        ⚡ Défi 60 s
-                      </button>
+                      {lv.intro ? (
+                        <button type="button" className="btn-secondary !py-1.5" onClick={() => setView({ kind: 'keys' })}>
+                          🎯 Jeu du clavier
+                        </button>
+                      ) : (
+                        <>
+                          <button type="button" className="btn-secondary !py-1.5" onClick={() => setGame({ level: lv, mode: 'zen' })}>
+                            🧘 Zen
+                          </button>
+                          <button type="button" className="btn-secondary !py-1.5" onClick={() => setGame({ level: lv, mode: 'chrono' })}>
+                            ⏱ Chrono
+                          </button>
+                          <button type="button" className="btn-secondary !py-1.5" onClick={() => setGame({ level: lv, mode: 'challenge' })}>
+                            ⚡ Défi 60 s
+                          </button>
+                        </>
+                      )}
                     </div>
                   ) : (
-                    <p className="mt-4 text-sm">🔒 Obtenez 1 étoile au niveau précédent.</p>
+                    <div className="mt-4 space-y-2 text-sm">
+                      <p>🔒 Obtenez 1 étoile au niveau précédent pour débloquer les exercices.</p>
+                      <button type="button" className="btn-ghost !px-0 !py-0 text-indigo-600" onClick={() => openLesson(lv)}>
+                        📖 Lire la leçon quand même
+                      </button>
+                    </div>
                   )}
                 </div>
               );
@@ -111,6 +165,8 @@ export function SolfegeModule() {
           </div>
         </>
       )}
+
+      {tab === 'explorer' && <Explorer />}
 
       {tab === 'ear' && <EarTraining />}
 

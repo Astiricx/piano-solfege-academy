@@ -16,7 +16,7 @@ export function App() {
   let page: ReactNode;
   switch (route.name) {
     case 'solfege':
-      page = <SolfegeModule />;
+      page = <SolfegeModule key={route.lesson ?? 'solfege'} lessonId={route.lesson} />;
       break;
     case 'rhythm':
       page = <RhythmModule />;

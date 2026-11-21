@@ -4,7 +4,9 @@ import type { SolfegeLevel, SolfegeNote } from '../../data/solfege';
 import { SingleNoteStaff } from '../../score/SingleNoteStaff';
 import { useKeyHints, useNoteInput } from '../../input/InputContext';
 import { useProgress, withActivity, type NoteStat } from '../../state/progress';
-import { FR_NAMES, LETTERS, midiToPitch, parsePitch, pitchNameLabel } from '../../lib/music';
+import { FR_NAMES, LETTERS, midiToName, parsePitch, pitchNameLabel } from '../../lib/music';
+import { clefFor, noteName, positionText } from '../../lib/staff';
+import type { Clef } from '../../types';
 import { audio } from '../../audio/AudioEngine';
 import { Stars, Stat } from '../../components/ui';
 
@@ -71,7 +73,7 @@ export function ReadingGame({ level, mode, onExit }: Props) {
   statsRef.current = data.noteStats;
   const [phase, setPhase] = useState<'ready' | 'play' | 'done'>('ready');
   const [note, setNote] = useState<SolfegeNote | null>(null);
-  const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ ok: boolean; text: string; wrong?: { pitch: string; clef: Clef } } | null>(null);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const attemptsRef = useRef<Attempt[]>([]);
   attemptsRef.current = attempts;
@@ -180,14 +182,32 @@ export function ReadingGame({ level, mode, onExit }: Props) {
       if (playedMidi === null) audio.playPrompt(target.midi, 0.6);
       setFeedback({ ok: true, text: `Bravo ! ${label} — ${(ms / 1000).toFixed(1)} s` });
     } else {
-      const played = playedMidi !== null ? pitchNameLabel(`${midiToPitch(playedMidi).letter}${midiToPitch(playedMidi).acc}${midiToPitch(playedMidi).octave}`, naming, settings.exactOctave) : null;
-      setFeedback({ ok: false, text: `C’était ${label}${played ? ` (vous avez joué ${played})` : ''}` });
+      // Diagnostic : on place la note jouée à côté de la note demandée.
+      const pc = playedMidi !== null ? playedMidi : (pcAnswer ?? 0);
+      let wrongMidi: number;
+      if (playedMidi !== null && settings.exactOctave) {
+        wrongMidi = playedMidi;
+      } else {
+        let d = (((pc - target.midi) % 12) + 12) % 12;
+        if (d > 6) d -= 12;
+        wrongMidi = target.midi + d;
+      }
+      const wrongPitch = midiToName(wrongMidi, target.acc === 'b');
+      let wrongClef: Clef = note.clef;
+      if (level.display === 'grand' && Math.abs(wrongMidi - target.midi) > 7) wrongClef = clefFor(wrongMidi);
+      const wName = noteName(wrongPitch, naming, settings.exactOctave);
+      const tName = noteName(note.pitch, naming, settings.exactOctave);
+      setFeedback({
+        ok: false,
+        wrong: { pitch: wrongPitch, clef: wrongClef },
+        text: `Tu as joué ${wName} (${positionText(wrongPitch, wrongClef, level.display === 'grand' && wrongClef !== note.clef)}), la note demandée était ${tName} (${positionText(note.pitch, note.clef, level.display === 'grand')}).`,
+      });
       audio.playPrompt(target.midi, 0.8, 0.15);
       if (mode === 'challenge') deadline.current -= PENALTY * 1000;
     }
     const all = [...attempts, att];
     setAttempts(all);
-    const delay = ok ? 450 : 1300;
+    const delay = ok ? 450 : mode === 'challenge' ? 1600 : 3000;
     if (mode !== 'challenge' && all.length >= ROUND_COUNT) {
       timers.current.push(window.setTimeout(() => finish(all), delay));
     } else {
@@ -269,9 +289,9 @@ export function ReadingGame({ level, mode, onExit }: Props) {
             <Stat label="temps moyen" value={avgMs ? `${(avgMs / 1000).toFixed(1)} s` : '—'} />
           </div>
           <div className={feedback && !feedback.ok ? 'animate-shake' : ''}>
-            <SingleNoteStaff pitch={note.pitch} clef={note.clef} display={level.display} status={feedback ? (feedback.ok ? 'correct' : 'wrong') : 'neutral'} />
+            <SingleNoteStaff pitch={note.pitch} clef={note.clef} display={level.display} status={feedback ? (feedback.ok ? 'correct' : 'wrong') : 'neutral'} wrong={feedback?.wrong ?? null} />
           </div>
-          <div className="h-8 text-center text-lg font-semibold">
+          <div className="min-h-[3.5rem] text-center text-lg font-semibold">
             {feedback && <span className={`animate-pop inline-block ${feedback.ok ? 'text-emerald-600' : 'text-rose-600'}`}>{feedback.text}</span>}
           </div>
           <div className="space-y-2">

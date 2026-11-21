@@ -129,8 +129,14 @@ export function Dashboard() {
           <p className="text-sm text-slate-500">{today ? `${today} exercice(s) terminé(s) aujourd’hui. Bravo !` : 'Pas encore d’exercice aujourd’hui.'}</p>
           <div className="flex flex-col gap-2">
             {nextLevel && (
-              <button type="button" className="btn-secondary justify-start" onClick={() => navigate({ name: 'solfege' })}>
-                𝄞 Lecture : niveau {nextLevel.number} – {nextLevel.title}
+              <button
+                type="button"
+                className={`${nextLevel.intro ? 'btn-primary' : 'btn-secondary'} justify-start text-left`}
+                onClick={() => navigate({ name: 'solfege', lesson: nextLevel.id })}
+              >
+                {nextLevel.intro
+                  ? '📖 Niveau 0 : Comprendre le clavier et la portée (Cours)'
+                  : `📖 Lecture : niveau ${nextLevel.number} – ${nextLevel.title} (cours puis exercice)`}
               </button>
             )}
             <button type="button" className="btn-secondary justify-start" onClick={() => navigate({ name: 'rhythm' })}>

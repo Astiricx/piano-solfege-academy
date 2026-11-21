@@ -1,7 +1,7 @@
 // Clavier de piano virtuel interactif (souris / tactile / clavier PC).
 import { useRef, type PointerEvent as RPointerEvent } from 'react';
 import type { Naming } from '../types';
-import { isBlackKey, midiLabel } from '../lib/music';
+import { isBlackKey, midiLabel, midiToPitch, pitchLabel } from '../lib/music';
 import type { KeyHints } from '../input/InputContext';
 
 interface Props {
@@ -77,9 +77,12 @@ export function PianoKeyboard({ start, end, active, hints, labels = {}, showName
           style={{ left: `${i * ww}%`, width: `${ww}%` }}
           aria-label={midiLabel(m, naming, true)}
         >
-          {showNames && <span className="font-semibold text-slate-700">{midiLabel(m, naming === 'both' ? 'fr' : naming)}</span>}
-          {m % 12 === 0 && <span className="font-bold text-indigo-600">{midiLabel(m, naming === 'both' ? 'fr' : naming, true)}</span>}
-          {labels[m] && <span className="mt-0.5 rounded bg-slate-200/80 px-1 font-mono text-[10px] text-slate-600">{labels[m]}</span>}
+          {m % 12 === 0 ? (
+            <span className="font-bold leading-tight text-indigo-600">{midiLabel(m, naming === 'both' ? 'fr' : naming, true)}</span>
+          ) : (
+            showNames && <span className="font-semibold leading-tight text-slate-600">{midiLabel(m, naming === 'both' ? 'fr' : naming)}</span>
+          )}
+          {labels[m] && <span className="mt-0.5 rounded bg-slate-200/80 px-1 font-mono text-[10px] text-slate-500">{labels[m]}</span>}
         </div>
       ))}
       {Array.from({ length: end - start + 1 }, (_, k) => start + k)
@@ -95,6 +98,12 @@ export function PianoKeyboard({ start, end, active, hints, labels = {}, showName
               style={{ left: `${(leftWhite + 1) * ww - bw / 2}%`, width: `${bw}%`, height: '62%' }}
               aria-label={midiLabel(m, naming, true)}
             >
+              {showNames && (
+                <span className="mb-0.5 flex flex-col items-center text-[8.5px] font-semibold leading-[1.05] text-slate-200">
+                  <span>{pitchLabel(midiToPitch(m, false), naming === 'en' ? 'en' : 'fr')}</span>
+                  <span>{pitchLabel(midiToPitch(m, true), naming === 'en' ? 'en' : 'fr')}</span>
+                </span>
+              )}
               {labels[m] && <span className="font-mono">{labels[m]}</span>}
             </div>
           );

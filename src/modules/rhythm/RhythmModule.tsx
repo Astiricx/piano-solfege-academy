@@ -9,6 +9,7 @@ import { isTypingTarget } from '../../input/keymap';
 import { useProgress, withActivity } from '../../state/progress';
 import { PageHeader, Stars, Stat, Tip, Toggle } from '../../components/ui';
 import type { NoteStatus } from '../../types';
+import { RhythmSymbols } from './RhythmSymbols';
 
 type Judge = 'perfect' | 'early' | 'late' | 'missed';
 const PERFECT = 0.07;
@@ -225,6 +226,7 @@ function RhythmPlayer({ ex, onExit }: { ex: RhythmExercise; onExit(): void }) {
   });
 
   const best = data.rhythm[ex.id]?.best;
+  const [showCourse, setShowCourse] = useState(best === undefined);
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
@@ -237,6 +239,22 @@ function RhythmPlayer({ ex, onExit }: { ex: RhythmExercise; onExit(): void }) {
       <div>
         <h1 className="text-2xl font-bold">{ex.title}</h1>
         <p className="text-slate-500 dark:text-slate-400">{ex.description}</p>
+      </div>
+
+      <div className="card space-y-3 !p-4">
+        <button type="button" className="flex w-full items-center justify-between text-left" onClick={() => setShowCourse((v) => !v)} aria-expanded={showCourse}>
+          <span className="text-lg font-bold">📖 Avant de jouer : les symboles de cet exercice</span>
+          <span className="text-sm text-slate-500">{showCourse ? '▲ Masquer' : '▼ Afficher'}</span>
+        </button>
+        {showCourse && (
+          <>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Chaque figure indique combien de temps dure le son (ou le silence). Le métronome bat les temps ; vous frappez au début de chaque note. Écoutez les exemples, puis
+              appuyez sur « ▶ Démarrer ».
+            </p>
+            <RhythmSymbols piece={piece} tempo={tempo} />
+          </>
+        )}
       </div>
 
       <div className="card flex flex-wrap items-center gap-4 !p-4">

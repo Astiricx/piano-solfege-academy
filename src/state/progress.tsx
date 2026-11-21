@@ -25,6 +25,8 @@ export interface Settings {
   zoom: number;
   keyboardOctaves: 2 | 3;
   showKeyboard: boolean;
+  /** Noms des notes (Do, Ré…) sur le clavier virtuel. */
+  keyboardNames: boolean;
   mic: MicSettings;
   inputSource: 'keyboard' | 'mic' | 'midi';
 }
@@ -62,6 +64,7 @@ export const DEFAULT_SETTINGS: Settings = {
   zoom: 1,
   keyboardOctaves: 3,
   showKeyboard: true,
+  keyboardNames: true,
   mic: DEFAULT_MIC_SETTINGS,
   inputSource: 'keyboard',
 };
