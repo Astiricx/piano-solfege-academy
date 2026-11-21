@@ -13,8 +13,8 @@ export function MiniKeyboard({ start, end, marks = {}, caption }: { start: numbe
   const W = whites.length * ww;
   const H = 110;
   return (
-    <figure className="inline-block">
-      <svg viewBox={`0 0 ${W + 2} ${H + 2}`} className="h-auto w-full max-w-xl" role="img" aria-label={caption}>
+    <figure className="mx-auto block w-full" style={{ maxWidth: Math.min(640, whites.length * 46) }}>
+      <svg viewBox={`0 0 ${W + 2} ${H + 2}`} className="h-auto w-full" role="img" aria-label={caption}>
         {whites.map((m, i) => (
           <g key={m}>
             <rect x={1 + i * ww} y={1} width={ww} height={H} rx={3} fill={marks[m]?.color ?? '#fff'} stroke="#64748b" />

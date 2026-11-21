@@ -14,8 +14,16 @@ export function KeyboardDock() {
     return () => window.removeEventListener('resize', on);
   }, []);
   const octaves = narrow ? 2 : settings.keyboardOctaves;
-  const start = (narrow ? 60 : 48) + input.octaveShift * 12;
-  const end = start + octaves * 12;
+  let start = (narrow ? 60 : 48) + input.octaveShift * 12;
+  let end = start + octaves * 12;
+  // Étend le clavier si une note à montrer (indice, note jouée) sort de la plage affichée.
+  const shown = [...(input.hints.expected ?? []), ...(input.hints.correct ?? []), ...(input.hints.wrong ?? []), ...input.activeNotes];
+  if (shown.length) {
+    const lo = Math.min(...shown);
+    const hi = Math.max(...shown);
+    if (lo < start) start = Math.max(21, Math.floor(lo / 12) * 12);
+    if (hi > end) end = Math.min(108, Math.ceil(hi / 12) * 12);
+  }
 
   return (
     <div className="sticky bottom-0 z-30 border-t border-slate-200 bg-slate-50/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">

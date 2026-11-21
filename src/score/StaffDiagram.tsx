@@ -82,16 +82,20 @@ export function StaffDiagram({ display, slots, highlights = [], width, slotWidth
     const onLine = pos % 2 === 0;
     const h = onLine ? 4 : geo.spacing - 2;
     const sx = slot !== undefined ? geo.slotX[slot] : undefined;
+    // Plusieurs surlignages : bandes courtes autour de chaque note pour éviter les chevauchements.
+    const local = sx !== undefined && highlights.length > 1;
+    const bandLeft = local ? sx! - 24 : geo.staveX + 34;
+    const bandWidth = local ? 48 : geo.staveW - 34;
     return (
       <div key={k} className="pointer-events-none">
         <div
           className={`absolute rounded ring-1 ${BAND[color]}`}
-          style={{ left: pct(geo.staveX + 34, geo.W), width: pct(geo.staveW - 34, geo.W), top: pct(y - h / 2, geo.H), height: pct(h, geo.H) }}
+          style={{ left: pct(bandLeft, geo.W), width: pct(bandWidth, geo.W), top: pct(y - h / 2, geo.H), height: pct(h, geo.H) }}
         />
         {tag !== undefined && (
           <div
             className={`absolute -translate-y-1/2 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11px] font-bold text-white shadow ${TAG[color]}`}
-            style={tagAt !== undefined ? { left: pct(tagAt, geo.W), top: pct(y, geo.H) } : sx !== undefined ? { left: pct(sx + 14, geo.W), top: pct(y, geo.H) } : { right: '0.5%', top: pct(y, geo.H) }}
+            style={tagAt !== undefined ? { left: pct(tagAt, geo.W), top: pct(y, geo.H) } : sx !== undefined ? { left: pct(sx + (local ? 26 : 16), geo.W), top: pct(y, geo.H) } : { right: '0.5%', top: pct(y, geo.H) }}
           >
             ⬅ {tag}
           </div>
@@ -99,7 +103,7 @@ export function StaffDiagram({ display, slots, highlights = [], width, slotWidth
         {sx !== undefined && (
           <div
             className={`absolute -translate-x-1/2 animate-bounce text-lg leading-none ${color === 'rose' ? 'text-rose-600' : color === 'emerald' ? 'text-emerald-600' : 'text-indigo-600'}`}
-            style={{ left: pct(sx, geo.W), top: pct(Math.min(y, (clef === 'treble' ? geo.trebleBottomY! - 4 * geo.spacing : geo.bassBottomY! - 4 * geo.spacing)) - 30, geo.H) }}
+            style={{ left: pct(sx, geo.W), top: pct(Math.max(0, y - 28), geo.H) }}
           >
             ⬇
           </div>
@@ -109,7 +113,7 @@ export function StaffDiagram({ display, slots, highlights = [], width, slotWidth
   };
 
   return (
-    <div className={`score-paper rounded-xl bg-white p-2 text-black shadow-inner ${className}`}>
+    <div className={`score-paper mx-auto rounded-xl bg-white p-2 text-black shadow-inner ${className}`} style={{ maxWidth: Math.round((geo?.W ?? width ?? 300) * 1.6) }}>
       <div
         className={`relative ${onPick ? 'cursor-pointer' : ''}`}
         onPointerMove={onPick ? (e) => setHover(locate(e)) : undefined}
