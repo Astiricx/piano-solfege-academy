@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Apprendre le solfège, le rythme et le piano pas à pas." />
+    <title>Piano Solfège Academy</title>
+    <script>
+      try {
+        var s = JSON.parse(localStorage.getItem('psa-progress-v1') || '{}');
+        var t = (s.settings && s.settings.theme) || 'dark';
+        if (t === 'dark') document.documentElement.classList.add('dark');
+      } catch (e) { document.documentElement.classList.add('dark'); }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

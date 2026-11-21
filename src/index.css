@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-slate-100 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-indigo-600 text-white hover:bg-indigo-500;
+  }
+  .btn-secondary {
+    @apply btn border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700;
+  }
+  .btn-ghost {
+    @apply btn text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-800;
+  }
+  .btn-success {
+    @apply btn bg-emerald-600 text-white hover:bg-emerald-500;
+  }
+  .btn-danger {
+    @apply btn bg-rose-600 text-white hover:bg-rose-500;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .seg {
+    @apply inline-flex overflow-hidden rounded-xl border border-slate-300 dark:border-slate-700;
+  }
+  .seg > button {
+    @apply px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800;
+  }
+  .seg > button[aria-pressed='true'] {
+    @apply bg-indigo-600 text-white hover:bg-indigo-600 dark:hover:bg-indigo-600;
+  }
+  .label {
+    @apply text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+  }
+  .toggle {
+    @apply inline-flex cursor-pointer select-none items-center gap-2 text-sm;
+  }
+}
+
+/* Surbrillance dynamique des notes (groupes SVG VexFlow) */
+.score-svg .st-current path,
+.score-svg .st-current text {
+  fill: #2563eb !important;
+  stroke: #2563eb !important;
+}
+.score-svg .st-correct path,
+.score-svg .st-correct text {
+  fill: #16a34a !important;
+  stroke: #16a34a !important;
+}
+.score-svg .st-ok path,
+.score-svg .st-ok text {
+  fill: #ca8a04 !important;
+  stroke: #ca8a04 !important;
+}
+.score-svg .st-wrong path,
+.score-svg .st-wrong text {
+  fill: #dc2626 !important;
+  stroke: #dc2626 !important;
+}
+.score-svg .st-missed path,
+.score-svg .st-missed text {
+  fill: #ea580c !important;
+  stroke: #ea580c !important;
+}
+.score-svg .st-dim {
+  opacity: 0.35;
+}
+
+input[type='range'] {
+  @apply h-2 cursor-pointer accent-indigo-600;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-pop {
+  animation: pop 0.25s ease-out;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+.animate-shake {
+  animation: shake 0.25s ease-in-out;
+}
