@@ -77,7 +77,7 @@ function buildNote(n: ScoreNote, clef: Clef | 'percussion', o: RenderOptions): S
   if (!n.isRest && clef !== 'percussion') {
     const naming = o.naming ?? 'fr';
     const fingerJust = n.hand === 'R' ? Annotation.VerticalJustify.TOP : Annotation.VerticalJustify.BOTTOM;
-    const nameJust = n.hand === 'R' ? Annotation.VerticalJustify.BOTTOM : Annotation.VerticalJustify.TOP;
+    const nameJust = Annotation.VerticalJustify.BOTTOM;
     if (o.showFingers) {
       const fingers = n.fingers.slice().reverse();
       fingers.forEach((f) => {
@@ -90,7 +90,7 @@ function buildNote(n: ScoreNote, clef: Clef | 'percussion', o: RenderOptions): S
       });
     }
     if (o.showNames) {
-      const names = (n.hand === 'R' ? n.pitches.slice().reverse() : n.pitches.slice()).map((p) =>
+      const names = n.pitches.slice().reverse().map((p) =>
         pitchNameLabel(p, naming === 'both' ? 'fr' : naming),
       );
       names.forEach((label) => {
@@ -134,9 +134,16 @@ export function renderScore(el: HTMLDivElement, piece: Piece, o: RenderOptions):
   const minW = o.minMeasureWidth ?? 200;
   const mpl = Math.max(1, Math.min(o.maxPerLine ?? 4, Math.floor((W - 90) / minW)));
   const rows = Math.ceil(piece.measureCount / mpl);
-  const trebleToBass = 70 + (o.showNames || o.showFingers ? 40 : 20);
+  const maxChord = Math.max(1, ...piece.notes.map((n) => n.midis.length));
+  const lineH = 12;
+  const namesH = o.showNames ? maxChord * lineH : 0;
+  const fingersH = o.showFingers ? maxChord * lineH : 0;
+  // espace sous la portée de Sol (noms MD) et au-dessus de la portée de Fa
+  const trebleToBass = 95 + namesH;
   const staffH = 80;
-  const rowH = annotSpace + staffH + (showT && showB ? trebleToBass : 0) + annotSpace;
+  const bottomSpace = showB ? 14 + namesH + fingersH : 14 + namesH;
+  const topSpace = showT ? annotSpace + (o.showFingers ? Math.max(0, fingersH - lineH) : 0) : annotSpace;
+  const rowH = topSpace + staffH + (showT && showB ? trebleToBass : 0) + bottomSpace;
   const H = rows * rowH + 10;
 
   const renderer = new Renderer(el, Renderer.Backends.SVG);
@@ -156,7 +163,7 @@ export function renderScore(el: HTMLDivElement, piece: Piece, o: RenderOptions):
 
   for (let row = 0; row < rows; row++) {
     const rowTop = 5 + row * rowH;
-    const yT = rowTop + annotSpace - 10;
+    const yT = rowTop + topSpace - 10;
     const yB = showT ? yT + trebleToBass : yT;
     const extraFirst = 38 + keyAccs * 11 + (row === 0 ? 32 : 0);
     const baseW = (W - 12 - extraFirst) / mpl;
